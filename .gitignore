@@ -1,0 +1,5 @@
+**/*.a
+**/*.so
+10-common/include/boost/
+10-common/include/drogon/
+10-common/include/trantor/
