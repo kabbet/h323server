@@ -1,0 +1,46 @@
+import("sources.gni")
+
+shared_library("mtlog_shared") {
+  sources = all_sources
+  include_dirs = [
+    "$include_path"
+  ]
+  deps = [
+    "$lib_path:libboost_log_setup",
+    "$lib_path:libboost_log",
+    "$lib_path:libboost_thread",
+  ]
+  defines = [
+    "BOOST_LOG_DYN_LINK"
+  ]
+}
+
+action("mtlog") {
+  inputs = [ "$root_out_dir/libmtlog_shared.so" ]
+  outputs = [ "$root_out_dir/lib/libmtlog.so" ]  
+  script = "//build/copy_lib.py"
+
+  if (is_debug) {
+    args = [
+      rebase_path(inputs[0], root_build_dir),
+      rebase_path(outputs[0], root_build_dir),
+      "debug"
+    ]
+  } else {
+    args = [
+      rebase_path(inputs[0], root_build_dir),
+      rebase_path(outputs[0], root_build_dir),
+      "release"
+    ]
+  }
+
+  deps = [ ":mtlog_shared" ]
+}
+
+group("install") {
+    deps = [
+        ":mtlog"
+    ]
+}
+
+
