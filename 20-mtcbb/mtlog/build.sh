@@ -20,5 +20,6 @@ ninja -C out/Release
 
 # clean out
 rm -rf out
+rm sources.gni
 
 echo -e "compile done\n"
