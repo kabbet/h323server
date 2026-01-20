@@ -83,12 +83,22 @@ source_set("libboost_locale") {
 
 source_set("libboost_log") {
   public_configs = [ ":prebuilt_lib_dir" ]
-  libs = [ "boost_log" ]
+  libs = [ ":libboost_log.so" ]
 }
 
 source_set("libboost_log_setup") {
   public_configs = [ ":prebuilt_lib_dir" ]
-  libs = [ "boost_log_setup" ]
+  libs = [ ":libboost_log_setup.so" ]
+}
+
+source_set("libboost_log_static") {
+  public_configs = [ ":prebuilt_lib_dir" ]
+  libs = [ ":libboost_log.a" ]
+}
+
+source_set("libboost_log_setup_static") {
+  public_configs = [ ":prebuilt_lib_dir" ]
+  libs = [ ":libboost_log_setup.a" ]
 }
 
 source_set("libboost_math_c99") {
@@ -188,7 +198,12 @@ source_set("libboost_test_exec_monitor") {
 
 source_set("libboost_thread") {
   public_configs = [ ":prebuilt_lib_dir" ]
-  libs = [ "boost_thread" ]
+  libs = [ ":libboost_thread.so" ]
+}
+
+source_set("libboost_thread_static") {
+  public_configs = [ ":prebuilt_lib_dir" ]
+  libs = [ ":libboost_thread.a" ]
 }
 
 source_set("libboost_timer") {

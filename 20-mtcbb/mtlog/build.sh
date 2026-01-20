@@ -18,7 +18,7 @@ echo "Building mtlog... [Release Version]"
 gn gen out/Release --args='is_debug=false'
 ninja -C out/Release
 
-# clean out
+#clean out
 rm -rf out
 rm sources.gni
 

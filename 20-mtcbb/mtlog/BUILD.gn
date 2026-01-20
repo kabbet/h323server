@@ -1,46 +1,67 @@
 import("sources.gni")
 
-shared_library("mtlog_shared") {
+source_set("objs") {
   sources = all_sources
-  include_dirs = [
-    "$include_path"
-  ]
+  include_dirs = [ "$include_path" ]
+}
+
+# Shared library target
+shared_library("mtlog_shared") {
+  output_name = "mtlog"
   deps = [
-    "$lib_path:libboost_log_setup",
     "$lib_path:libboost_log",
+    "$lib_path:libboost_log_setup",
     "$lib_path:libboost_thread",
+    ":objs",
   ]
-  defines = [
-    "BOOST_LOG_DYN_LINK"
-  ]
+  
+  defines = [ "BOOST_LOG_DYN_LINK" ]
 }
 
-action("mtlog") {
-  inputs = [ "$root_out_dir/libmtlog_shared.so" ]
-  outputs = [ "$root_out_dir/lib/libmtlog.so" ]  
-  script = "//build/copy_lib.py"
+# Static library target
+static_library("mtlog_static") {
+  output_name = "mtlog"
+  deps = [
+    "$lib_path:libboost_log_setup_static",
+    "$lib_path:libboost_log_static",
+    "$lib_path:libboost_thread_static",
+    ":objs",
+  ]
+  defines = [ "BOOST_LOG_STATIC_LINK" ]
+}
 
-  if (is_debug) {
-    args = [
-      rebase_path(inputs[0], root_build_dir),
-      rebase_path(outputs[0], root_build_dir),
-      "debug"
-    ]
-  } else {
-    args = [
-      rebase_path(inputs[0], root_build_dir),
-      rebase_path(outputs[0], root_build_dir),
-      "release"
-    ]
-  }
-
+# Copy shared library to lib directory
+copy("copy_shared") {
   deps = [ ":mtlog_shared" ]
+  sources = [ "$root_out_dir/libmtlog.so" ]
+  if (is_debug) {
+    outputs = [ "$root_out_dir/../../../../10-common/lib/locallib/linux64/debug/libmtlog.so" ]
+  } else {
+    outputs = [ "$root_out_dir/../../../../10-common/lib/locallib/linux64/release/libmtlog.so" ]
+  }
 }
 
+#Copy and rename static library to lib directory
+copy("copy_static") {
+  deps = [ ":mtlog_static" ]
+  sources = [ "$target_out_dir/libmtlog.a" ]
+  if (is_debug) {
+    outputs = [ "$root_out_dir/../../../../10-common/lib/locallib/linux64/debug/libmtlog.a" ]
+  } else {
+    outputs = [ "$root_out_dir/../../../../10-common/lib/locallib/linux64/release/libmtlog.a" ]
+  }
+  
+}
+
+# Main target that builds everything
+group("mtlog") {
+  deps = [
+    ":copy_shared",
+    ":copy_static",
+  ]
+}
+
+# Install target
 group("install") {
-    deps = [
-        ":mtlog"
-    ]
+  deps = [ ":mtlog" ]
 }
-
-
