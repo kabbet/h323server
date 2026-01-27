@@ -35,10 +35,11 @@ if(BUILD_SHARED_LIBS)
             boost_log_setup
             boost_log
             boost_thread
+            boost_filesystem
             -Wl,--as-needed
     )
     
-    install(TARGETS mtlog_shared LIBRARY DESTINATION lib)
+    install(TARGETS mtlog_shared LIBRARY DESTINATION .)
 endif()
 
 # 静态库
@@ -51,8 +52,9 @@ if(BUILD_STATIC_LIBS)
             boost_log_setup
             boost_log
             boost_thread
+            boost_filesystem
             pthread
     )
     
-    install(TARGETS mtlog_static ARCHIVE DESTINATION lib)
+    install(TARGETS mtlog_static ARCHIVE DESTINATION .)
 endif()

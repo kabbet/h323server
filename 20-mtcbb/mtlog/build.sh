@@ -7,6 +7,7 @@ set -e  # 遇到错误立即退出
 PROJECT_NAME=$(basename "$PWD")
 COMPILE_OUTPUT_DIR="../../../10-common/version/compileinfo"
 COMPILE_OUTPUT_BASE="${COMPILE_OUTPUT_DIR}/${PROJECT_NAME}_linux64_cmake"
+COMPILE_INSTALL_DIR="../../../10-common/lib/locallib/linux64"
 
 # 颜色定义
 RED='\033[0;31m'
@@ -55,7 +56,10 @@ build_version() {
     
     # CMake 配置
     print_info "CMake 配置中..."
-    cmake -G Ninja -DCMAKE_BUILD_TYPE="${version_type}" .. || {
+    cmake -G Ninja \
+        -DCMAKE_INSTALL_PREFIX=${COMPILE_INSTALL_DIR}/$1 \
+        -DCMAKE_BUILD_TYPE="${version_type}" \
+        .. || {
         print_error "CMake 配置失败"
         cd ..
         return 1
@@ -74,11 +78,16 @@ build_version() {
         cd ..
         return 1
     fi
+
+    
+    ninja install
+    print_step "${version_type} install done"
     
     # 返回上级目录
     cd ..
     
     print_step "${version_type} 版本编译完成"
+    rm -rf ${build_path}
     echo ""
 }
 
@@ -101,11 +110,11 @@ main() {
         exit 1
     fi
     
-    # # 编译 Release 版本
-    # if ! build_version "Release"; then
-    #     print_error "Release 版本编译失败"
-    #     exit 1
-    # fi
+    # 编译 Release 版本
+    if ! build_version "Release"; then
+        print_error "Release 版本编译失败"
+        exit 1
+    fi
     
     # 计算总耗时
     local end_time=$(date +%s)
