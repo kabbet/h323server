@@ -46,16 +46,14 @@ namespace MTLOG
         ~mtlog();
         bool Init();
         bool setLogLvl(severity_level lvl);
+
+    private:
         bool generateSinks();
         bool setDefaultFormatter();
 
     private:
-        mtlog(const mtlog &) = delete;
-        const mtlog operator=(const mtlog &) = delete;
-
-    private:
         shared_ptr<text_sink> m_pSink;
-        src::logger m_lg;
+        static src::logger m_lg;
     };
 
     template <typename CharT, typename TraitsT>
@@ -73,6 +71,13 @@ namespace MTLOG
         else
             strm << static_cast<int>(lvl);
         return strm;
+    }
+
+    template <typename T, typename... Args>
+    void writeLog(T first, Args... rest)
+    {
+        BOOST_LOG(mtlog::m_lg) << first; // 记录当前参数
+        writeLog(rest...);               // 递归调用，记录剩下的参数
     }
 
 }

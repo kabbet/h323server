@@ -1,5 +1,7 @@
 **/*.a
 **/*.so
+**/*.0
+10-common/version/compileinfo/
 10-common/include/boost/
 10-common/include/drogon/
 10-common/include/trantor/

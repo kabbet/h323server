@@ -67,4 +67,5 @@ namespace MTLOG
             expr::attr<severity_level>("Severity").or_default(lvl) >= warning || expr::begins_with(expr::attr<std::string>("Tag").or_default(std::string()), "IMPORTANT"));
         return true;
     }
+
 }
