@@ -14,22 +14,21 @@ include_directories(${CMAKE_SOURCE_DIR}/../../10-common/include)
 link_directories(${CMAKE_SOURCE_DIR}/../../10-common/lib/releaselib/linux64)
 
 # 源文件列表
-set(MTLOG_SOURCES
+set(${CMAKE_PROJECT_NAME}_SOURCES
     source/mtlog.cpp
 )
 
 # 动态库
 if(BUILD_SHARED_LIBS)
-    add_library(mtlog_shared SHARED ${MTLOG_SOURCES})
-    set_target_properties(mtlog_shared PROPERTIES OUTPUT_NAME mtlog)
+    add_library(${CMAKE_PROJECT_NAME}_shared SHARED ${${CMAKE_PROJECT_NAME}_SOURCES})
+    set_target_properties(${CMAKE_PROJECT_NAME}_shared PROPERTIES OUTPUT_NAME ${CMAKE_PROJECT_NAME})
     
-    target_compile_definitions(mtlog_shared
+    target_compile_definitions(${CMAKE_PROJECT_NAME}_shared
         PUBLIC
             BOOST_ALL_DYN_LINK
     )
     
-    # 使用 -Wl,--no-as-needed 防止链接器优化掉未直接使用的库
-    target_link_libraries(mtlog_shared
+    target_link_libraries(${CMAKE_PROJECT_NAME}_shared
         PRIVATE 
             -Wl,--no-as-needed
             boost_log_setup
@@ -39,15 +38,15 @@ if(BUILD_SHARED_LIBS)
             -Wl,--as-needed
     )
     
-    install(TARGETS mtlog_shared LIBRARY DESTINATION .)
+    install(TARGETS ${CMAKE_PROJECT_NAME}_shared LIBRARY DESTINATION .)
 endif()
 
 # 静态库
 if(BUILD_STATIC_LIBS)
-    add_library(mtlog_static STATIC ${MTLOG_SOURCES})
-    set_target_properties(mtlog_static PROPERTIES OUTPUT_NAME mtlog)
+    add_library(${CMAKE_PROJECT_NAME}_static STATIC ${CMAKE_PROJECT_NAME}_SOURCES)
+    set_target_properties(${CMAKE_PROJECT_NAME}_static PROPERTIES OUTPUT_NAME ${CMAKE_PROJECT_NAME})
     
-    target_link_libraries(mtlog_static
+    target_link_libraries(${CMAKE_PROJECT_NAME}_static
         PRIVATE 
             boost_log_setup
             boost_log
@@ -56,5 +55,5 @@ if(BUILD_STATIC_LIBS)
             pthread
     )
     
-    install(TARGETS mtlog_static ARCHIVE DESTINATION .)
+    install(TARGETS ${CMAKE_PROJECT_NAME}_static ARCHIVE DESTINATION .)
 endif()
