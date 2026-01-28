@@ -56,14 +56,31 @@ build_version() {
     
     # CMake 配置
     print_info "CMake 配置中..."
-    cmake -G Ninja \
-        -DCMAKE_INSTALL_PREFIX=${COMPILE_INSTALL_DIR}/$1 \
-        -DCMAKE_BUILD_TYPE="${version_type}" \
-        .. || {
-        print_error "CMake 配置失败"
-        cd ..
-        return 1
-    }
+    if [ "${version_type}" == "Debug" ];then
+        cmake -G Ninja \
+                -DCMAKE_VERBOSE_MAKEFILE=ON \
+                -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
+                -DCMAKE_INSTALL_PREFIX=${COMPILE_INSTALL_DIR}/$1 \
+                -DCMAKE_BUILD_TYPE="${version_type}" \
+                .. > /dev/null 2>&1 || {
+                print_error "CMake 配置失败"
+                cd ..
+                return 1
+            }
+
+    else
+        cmake -G Ninja \
+                -DCMAKE_VERBOSE_MAKEFILE=OFF \
+                -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
+                -DCMAKE_INSTALL_PREFIX=${COMPILE_INSTALL_DIR}/$1 \
+                -DCMAKE_BUILD_TYPE="${version_type}" \
+                .. > /dev/null 2>&1 || {
+                print_error "CMake 配置失败"
+                cd ..
+                return 1
+            }
+    fi
+    
     
     # 编译
     print_info "开始编译 (使用 $(nproc) 个并行任务)..."
@@ -80,7 +97,7 @@ build_version() {
     fi
 
     
-    ninja install
+    ninja install > /dev/null 2>&1
     print_step "${version_type} install done"
     
     # 返回上级目录

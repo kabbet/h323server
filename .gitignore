@@ -6,3 +6,6 @@
 10-common/include/boost/
 10-common/include/drogon/
 10-common/include/trantor/
+compile_commands.json
+10-common/lib/
+.cache
