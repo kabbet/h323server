@@ -9,19 +9,29 @@ option(BUILD_EXECUTABLE "Build executable demo" ON)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
-# 设置 Boost 路径 - 在 find_package 之前
-set(BOOST_ROOT "${CMAKE_SOURCE_DIR}/../../10-common")
-set(BOOST_INCLUDEDIR "${CMAKE_SOURCE_DIR}/../../10-common/include")
-set(BOOST_LIBRARYDIR "${CMAKE_SOURCE_DIR}/../../10-common/lib/releaselib/linux64")
-set(Boost_NO_SYSTEM_PATHS ON)
-set(Boost_NO_BOOST_CMAKE ON)
-set(Boost_DEBUG OFF)  # 临时启用调试信息，看看 CMake 在哪里找 Boost
+
+
+# 如果单独编译此子项目，需要设置路径
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    # 单独编译模式
+    get_filename_component(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+    set(BOOST_ROOT "${PROJECT_ROOT}/10-common")
+    set(BOOST_INCLUDEDIR "${PROJECT_ROOT}/10-common/include")
+    set(BOOST_LIBRARYDIR "${PROJECT_ROOT}/10-common/lib/releaselib/linux64")
+    set(Boost_NO_SYSTEM_PATHS ON)
+    set(Boost_NO_BOOST_CMAKE ON)
+
+    include_directories(${PROJECT_ROOT}/10-common/include)
+    link_directories(
+        ${PROJECT_ROOT}/10-common/lib/locallib/linux64/Debug
+        ${PROJECT_ROOT}/10-common/lib/releaselib/linux64
+    )
+
+    list(APPEND CMAKE_PREFIX_PATH "${PROJECT_ROOT}/10-common/lib/locallib/linux64/${CMAKE_BUILD_TYPE}")
+    set(mtlog_DIR "${PROJECT_ROOT}/10-common/lib/locallib/linux64/${CMAKE_BUILD_TYPE}/cmake/mtlog")
+endif()
+
 set(Boost_NO_WARN_NEW_VERSIONS ON)
-include_directories(${CMAKE_SOURCE_DIR}/../../10-common/include)
-link_directories(
-    ${CMAKE_SOURCE_DIR}/../../10-common/lib/locallib/linux64/Debug
-    ${CMAKE_SOURCE_DIR}/../../10-common/lib/releaselib/linux64
-)
 find_package(Boost REQUIRED COMPONENTS log log_setup thread filesystem)
 if(Boost_FOUND)
     message(STATUS "Boost version: ${Boost_VERSION}")
@@ -29,9 +39,11 @@ if(Boost_FOUND)
     message(STATUS "Boost library dirs: ${Boost_LIBRARY_DIRS}")
     message(STATUS "Boost libraries: ${Boost_LIBRARIES}")
 endif()
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/../../10-common/lib/locallib/linux64/${CMAKE_BUILD_TYPE}")
-set(mtlog_DIR "${CMAKE_SOURCE_DIR}/../../10-common/lib/locallib/linux64/${CMAKE_BUILD_TYPE}/cmake/mtlog")
-find_package(mtlog REQUIRED)
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    find_package(mtlog REQUIRED)
+endif()
+
 # 源文件列表
 set(${CMAKE_PROJECT_NAME}_SOURCES
     source/main.cpp

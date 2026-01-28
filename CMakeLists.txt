@@ -1,6 +1,6 @@
 # project/CMakeLists.txt
 cmake_minimum_required(VERSION 3.10)
-project(MyProject)
+project(h323server)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -13,10 +13,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 定义 10-common 的路径
 set(COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/10-common)
 
-# 全局添加头文件搜索路径（所有子项目都能访问）
-include_directories(${COMMON_DIR}/include)
+# 设置全局 Boost 路径（所有子项目可用）
+set(BOOST_ROOT ${COMMON_DIR} CACHE PATH "Boost root directory")
+set(BOOST_INCLUDEDIR ${COMMON_DIR}/include CACHE PATH "Boost include directory")
+set(BOOST_LIBRARYDIR ${COMMON_DIR}/lib/releaselib/linux64 CACHE PATH "Boost library directory")
+set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "Do not search system paths for Boost")
+set(Boost_NO_BOOST_CMAKE ON CACHE BOOL "Do not use Boost's CMake config")
+set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries")
+set(BUILD_STATIC_LIBS ON CACHE BOOL "Build static libraries")
 
-# 全局添加库文件搜索路径
+include_directories(${COMMON_DIR}/include)
 link_directories(
     ${COMMON_DIR}/lib/locallib/linux64/Debug
     ${COMMON_DIR}/lib/releaselib/linux64
