@@ -5,6 +5,8 @@ project(h323server)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(BUILD_DEMO "Build demo executable" OFF)
+option(BUILD_HTTPSERVER "Build httpserver executable" ON)
 
 # ============================================
 # 配置 10-common 的头文件和库文件路径
@@ -36,11 +38,13 @@ link_directories(
 file(GLOB SUBDIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/20-mtcbb 
      ${CMAKE_CURRENT_SOURCE_DIR}/20-mtcbb/*)
 
-foreach(subdir ${SUBDIRS})
-    set(full_path ${CMAKE_CURRENT_SOURCE_DIR}/20-mtcbb/${subdir})
-    # 检查是否是目录且包含 CMakeLists.txt
-    if(IS_DIRECTORY ${full_path} AND EXISTS ${full_path}/CMakeLists.txt)
-        message(STATUS "Adding subdirectory: 20-mtcbb/${subdir}")
-        add_subdirectory(20-mtcbb/${subdir})
-    endif()
-endforeach()
+
+add_subdirectory(20-mtcbb/mtlog)
+if(BUILD_DEMO)
+    add_subdirectory(20-mtcbb/demo)
+endif()
+
+if(BUILD_HTTPSERVER)
+    add_subdirectory(20-mtcbb/httpserver)
+endif()
+
