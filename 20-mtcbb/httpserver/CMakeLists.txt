@@ -15,16 +15,36 @@ endif()
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     # 单独编译模式
     get_filename_component(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+
+    # BOOST
     set(BOOST_ROOT "${PROJECT_ROOT}/10-common")
     set(BOOST_INCLUDEDIR "${PROJECT_ROOT}/10-common/include")
     set(BOOST_LIBRARYDIR "${PROJECT_ROOT}/10-common/lib/releaselib/linux64")
+    set(Boost_NO_SYSTEM_PATHS ON)
+    set(Boost_NO_BOOST_CMAKE ON)
+    set(Boost_NO_WARN_NEW_VERSIONS ON)
 
+    # mtlog
     set(DROGON_ROOT "${PROJECT_ROOT}/10-common")
     set(DROGON_INCLUDEDIR "${PROJECT_ROOT}/10-common/include")
     set(DROGON_LIBRARYDIR "${PROJECT_ROOT}/10-common/lib/releaselib/linux64")
 
-    set(Boost_NO_SYSTEM_PATHS ON)
-    set(Boost_NO_BOOST_CMAKE ON)
+
+    # DROGON
+    set(DROGON_ROOT "${PROJECT_ROOT}/10-common")
+    set(DROGON_INCLUDEDIR "${PROJECT_ROOT}/10-common/include")
+    set(DROGON_LIBRARYDIR "${PROJECT_ROOT}/10-common/lib/releaselib/linux64")
+
+    # TRANTOR
+    set(TRANTOR_ROOT "${PROJECT_ROOT}/10-common")
+    set(TRANTOR_INCLUDEDIR "${PROJECT_ROOT}/10-common/include")
+    set(TRANTOR_LIBRARYDIR "${PROJECT_ROOT}/10-common/lib/releaselib/linux64")
+
+    # JSONCPP
+    set(JSONCPP_ROOT "${PROJECT_ROOT}/10-common")
+    set(JSONCPP_INCLUDEDIR "${PROJECT_ROOT}/10-common/include")
+    set(JSONCPP_LIBRARYDIR "${PROJECT_ROOT}/10-common/lib/releaselib/linux64")
+
 
     include_directories(
         ${PROJECT_ROOT}/10-common/include
@@ -37,11 +57,10 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
     list(APPEND CMAKE_PREFIX_PATH "${PROJECT_ROOT}/10-common/lib/locallib/linux64/${CMAKE_BUILD_TYPE}")
     list(APPEND CMAKE_PREFIX_PATH "${PROJECT_ROOT}/10-common/lib/releaselib/linux64")
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
     set(mtlog_DIR "${PROJECT_ROOT}/10-common/lib/locallib/linux64/${CMAKE_BUILD_TYPE}/cmake/mtlog")
-
 endif()
 
-set(Boost_NO_WARN_NEW_VERSIONS ON)
 find_package(Boost REQUIRED COMPONENTS log log_setup thread filesystem)
 if(Boost_FOUND)
     message(STATUS "Boost version: ${Boost_VERSION}")
@@ -51,35 +70,39 @@ if(Boost_FOUND)
 endif()
 
 # 在 find_package(Drogon) 之前
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    # 添加 cmake 模块路径
-    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+# 添加 cmake 模块路径
+find_package(mtlog MODULE REQUIRED)
+if (mtlog_FOUND)
+    message(STATUS "Mtlog version: ${mtlog_VERSION}")
+endif()
 
-    find_package(mtlog REQUIRED)
-    if (mtlog_FOUND)
-        message(STATUS "Mtlog version: ${mtlog_VERSION}")
-    endif()
+find_package(JsonCpp MODULE REQUIRED)
+if (JsonCpp_FOUND)
+    message(STATUS "Mtlog version: ${mtlog_VERSION}")
+endif()
 
-    # 使用 Module 模式查找 Drogon
-    find_package(Trantor MODULE REQUIRED)
-    if(Trantor_FOUND)
-        message(STATUS "Trantor version: ${Trantor_VERSION}")
-        message(STATUS "Trantor include dirs: ${Trantor_INCLUDE_DIRS}")
-        message(STATUS "Trantor libraries: ${Trantor_LIBRARIES}")
-    endif()
 
-    # 使用 Module 模式查找 Drogon
-    find_package(Drogon MODULE REQUIRED)
-    if(Drogon_FOUND)
-        message(STATUS "Drogon version: ${Drogon_VERSION}")
-        message(STATUS "Drogon include dirs: ${Drogon_INCLUDE_DIRS}")
-        message(STATUS "Drogon libraries: ${Drogon_LIBRARIES}")
-    endif()
+
+# 使用 Module 模式查找 Trantor
+find_package(Trantor MODULE REQUIRED)
+if(Trantor_FOUND)
+    message(STATUS "Trantor version: ${Trantor_VERSION}")
+    message(STATUS "Trantor include dirs: ${Trantor_INCLUDE_DIRS}")
+    message(STATUS "Trantor libraries: ${Trantor_LIBRARIES}")
+endif()
+
+# 使用 Module 模式查找 Drogon
+find_package(Drogon MODULE REQUIRED)
+if(Drogon_FOUND)
+    message(STATUS "Drogon version: ${Drogon_VERSION}")
+    message(STATUS "Drogon include dirs: ${Drogon_INCLUDE_DIRS}")
+    message(STATUS "Drogon libraries: ${Drogon_LIBRARIES}")
 endif()
 
 # 源文件列表
 set(${CMAKE_PROJECT_NAME}_SOURCES
     source/RestfulApi.cpp
+    source/JsonCtrl.cpp
     source/main.cpp
 )
 
@@ -95,6 +118,7 @@ if(BUILD_EXECUTABLE)
          mtlog::shared
          Trantor::Trantor
          Drogon::Drogon
+         JsonCpp::JsonCpp
     )
     install(TARGETS ${CMAKE_PROJECT_NAME} RUNTIME DESTINATION .)
 endif()

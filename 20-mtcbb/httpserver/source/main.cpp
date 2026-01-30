@@ -1,12 +1,26 @@
-#include <drogon/HttpAppFramework.h>
-#include "RestfulApi.hpp"
+#include <drogon/HttpRequest.h>
+#include <drogon/HttpResponse.h>
+#include <drogon/drogon.h>
+#include <trantor/utils/Logger.h>
 
-int main() {
-    // 配置 Drogon
-    drogon::app().addListener("0.0.0.0", 8080);
-    drogon::app().setLogLevel(trantor::Logger::kDebug);
-    
-    // 启动应用
-    drogon::app().run();
+using namespace drogon;
+
+int main()
+{
+    app()
+        .setLogPath(".")
+        .setLogLevel(trantor::Logger::kWarn)
+        .addListener("0.0.0.0", 8848)
+        .setThreadNum(0)
+        .registerSyncAdvice([](const HttpRequestPtr& req) -> HttpResponsePtr {
+            const auto& path = req->path();
+            if (path.length() == 1 && path[0] == '/') {
+                auto response = HttpResponse::newHttpResponse();
+                response->setBody("<p>Hello, world!</p>");
+                return response;
+            }
+            return nullptr;
+        })
+        .run();
     return 0;
 }

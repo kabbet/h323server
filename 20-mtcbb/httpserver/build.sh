@@ -62,7 +62,7 @@ build_version() {
                 -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
                 -DCMAKE_INSTALL_PREFIX=${COMPILE_INSTALL_DIR}/$1 \
                 -DCMAKE_BUILD_TYPE="${version_type}" \
-                ..  || {
+                .. > /dev/null 2>&1 || {
                 print_error "CMake 配置失败"
                 cd ..
                 return 1

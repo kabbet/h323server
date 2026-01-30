@@ -26,10 +26,10 @@ endif()
 
 # 查找头文件
 find_path(Trantor_INCLUDE_DIR
-    NAMES drogon/drogon.h
+    NAMES trantor/exports.h
     PATHS
-        ${DROGON_ROOT}
-        $ENV{DROGON_ROOT}
+        ${TRANTOR_ROOT}
+        $ENV{TRANTOR_ROOT}
         /usr/local
         /usr
         /opt/local
@@ -42,10 +42,10 @@ find_path(Trantor_INCLUDE_DIR
 
 # 查找库文件
 find_library(Trantor_LIBRARY
-    NAMES drogon libdrogon
+    NAMES trantor libtrantor
     PATHS
-        ${DROGON_ROOT}
-        $ENV{DROGON_ROOT}
+        ${TRANTOR_ROOT}
+        $ENV{TRANTOR_ROOT}
         /usr/local
         /usr
         /opt/local
@@ -60,27 +60,27 @@ find_library(Trantor_LIBRARY
 
 # 尝试获取版本信息
 if(Trantor_INCLUDE_DIR)
-    if(EXISTS "${Trantor_INCLUDE_DIR}/drogon/version.h")
-        file(READ "${Trantor_INCLUDE_DIR}/drogon/version.h" _drogon_version_header)
+    if(EXISTS "${Trantor_INCLUDE_DIR}/trantor/version.h")
+        file(READ "${Trantor_INCLUDE_DIR}/trantor/version.h" _trantor_version_header)
         
-        string(REGEX MATCH "#define[ \t]+DROGON_VERSION_MAJOR[ \t]+([0-9]+)" 
-               _drogon_major_version_match "${_drogon_version_header}")
+        string(REGEX MATCH "#define[ \t]+TRANTOR_VERSION_MAJOR[ \t]+([0-9]+)" 
+               _trantor_major_version_match "${_trantor_version_header}")
         set(Trantor_VERSION_MAJOR "${CMAKE_MATCH_1}")
         
-        string(REGEX MATCH "#define[ \t]+DROGON_VERSION_MINOR[ \t]+([0-9]+)"
-               _drogon_minor_version_match "${_drogon_version_header}")
+        string(REGEX MATCH "#define[ \t]+TRANTOR_VERSION_MINOR[ \t]+([0-9]+)"
+               _trantor_minor_version_match "${_trantor_version_header}")
         set(Trantor_VERSION_MINOR "${CMAKE_MATCH_1}")
         
-        string(REGEX MATCH "#define[ \t]+DROGON_VERSION_PATCH[ \t]+([0-9]+)"
-               _drogon_patch_version_match "${_drogon_version_header}")
+        string(REGEX MATCH "#define[ \t]+TRANTOR_VERSION_PATCH[ \t]+([0-9]+)"
+               _trantor_patch_version_match "${_trantor_version_header}")
         set(Trantor_VERSION_PATCH "${CMAKE_MATCH_1}")
         
         set(Trantor_VERSION "${Trantor_VERSION_MAJOR}.${Trantor_VERSION_MINOR}.${Trantor_VERSION_PATCH}")
         
-        unset(_drogon_version_header)
-        unset(_drogon_major_version_match)
-        unset(_drogon_minor_version_match)
-        unset(_drogon_patch_version_match)
+        unset(_trantor_version_header)
+        unset(_trantor_major_version_match)
+        unset(_trantor_minor_version_match)
+        unset(_trantor_patch_version_match)
     endif()
 endif()
 
@@ -93,7 +93,7 @@ find_package_handle_standard_args(Trantor
     VERSION_VAR
         Trantor_VERSION
     FAIL_MESSAGE
-        "Could not find Trantor library. Try setting DROGON_ROOT to the Trantor installation directory."
+        "Could not find Trantor library. Try setting TRANTOR_ROOT to the Trantor installation directory."
 )
 
 # 设置输出变量

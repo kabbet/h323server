@@ -1,33 +1,18 @@
 #include "RestfulApi.hpp"
+#include <drogon/CacheMap.h>
+#include <drogon/HttpRequest.h>
 #include <drogon/HttpSimpleController.h>
 #include <drogon/HttpResponse.h>
 
 namespace drogon
 {
-    void SayHello::genericHello(const HttpRequestPtr & tmp, std::function<void(const HttpResponsePtr&)>&& callback)
+    void BenchmarkCtrl::asyncHandleHttpRequest(
+            const HttpRequestPtr &,
+            std::function<void(const HttpResponsePtr &)> &&callback)
     {
         auto resp = HttpResponse::newHttpResponse();
-        resp->setBody(
-                "hello, this is a generic hello message from the SayHello"
-                "controller"
-                );
-        callback(resp);
-    }
-
-    void SayHello::personalizedHello(const HttpRequestPtr& tmp, std::function<void(const HttpResponsePtr&)> && callback)
-    {
-        auto resp = HttpResponse::newHttpResponse();
-        resp->setBody(
-                "Hi there, this is another hello from the SayHello Controller"
-                );
-        callback(resp);
-    }
-
-    void HelloViewController::asyncHandleHttpRequest(const HttpRequestPtr& req, std::function<void(const HttpResponsePtr&)> &&callback) 
-    {
-        HttpViewData data;
-        data["name"] = req->getParameter("name");
-        auto resp = HttpResponse::newHttpViewResponse("HelloView", data);
+        resp->setBody("<p>Hello, world!</p>");
+        resp->setExpiredTime(0);
         callback(resp);
     }
 }

@@ -21,6 +21,13 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(Boost_NO_SYSTEM_PATHS ON)
     set(Boost_NO_BOOST_CMAKE ON)
 
+    # mtlog
+    set(DROGON_ROOT "${PROJECT_ROOT}/10-common")
+    set(DROGON_INCLUDEDIR "${PROJECT_ROOT}/10-common/include")
+    set(DROGON_LIBRARYDIR "${PROJECT_ROOT}/10-common/lib/releaselib/linux64")
+
+
+
     include_directories(${PROJECT_ROOT}/10-common/include)
     link_directories(
         ${PROJECT_ROOT}/10-common/lib/locallib/linux64/Debug
@@ -28,6 +35,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     )
 
     list(APPEND CMAKE_PREFIX_PATH "${PROJECT_ROOT}/10-common/lib/locallib/linux64/${CMAKE_BUILD_TYPE}")
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
     set(mtlog_DIR "${PROJECT_ROOT}/10-common/lib/locallib/linux64/${CMAKE_BUILD_TYPE}/cmake/mtlog")
 endif()
 
@@ -41,7 +49,7 @@ if(Boost_FOUND)
 endif()
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    find_package(mtlog REQUIRED)
+    find_package(mtlog MODULE REQUIRED)
 endif()
 
 # 源文件列表
