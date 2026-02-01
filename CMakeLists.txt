@@ -1,68 +1,128 @@
 # project/CMakeLists.txt
-cmake_minimum_required(VERSION 3.10)
-project(h323server)
+cmake_minimum_required(VERSION 3.14)
+project(MTCBB_Project VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(BUILD_DEMO "Build demo executable" OFF)
-option(BUILD_HTTPSERVER "Build httpserver executable" ON)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries")
-set(BUILD_STATIC_LIBS ON CACHE BOOL "Build static libraries")
+# ==================== 构建类型相关配置 ====================
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    set(BUILD_TYPE_LOWER "debug")
+else()
+    set(BUILD_TYPE_LOWER "release")
+endif()
 
+# 路径设置（第三方库现在也区分 debug/release）
+set(COMMON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/10-common/include)
+set(COMMON_LIB_DIR ${CMAKE_SOURCE_DIR}/10-common/lib/releaselib/linux64/${BUILD_TYPE_LOWER})
+set(COMMON_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/10-common/lib/locallib/linux64/${BUILD_TYPE_LOWER})
 
-# ============================================
-# 配置 10-common 的头文件和库文件路径
-# ============================================
+file(MAKE_DIRECTORY ${COMMON_OUTPUT_DIR})
 
-# 定义 10-common 的路径
-set(COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/10-common)
+# ==================== 系统依赖 ====================
+find_package(Boost 1.70 REQUIRED COMPONENTS log log_setup system thread filesystem)
+if(NOT Boost_FOUND)
+    message(FATAL_ERROR "Boost not found!")
+endif()
 
-# 设置全局 Boost 路径（所有子项目可用）
-# BOOST
-set(BOOST_ROOT ${COMMON_DIR} CACHE PATH "Boost root directory")
-set(BOOST_INCLUDEDIR ${COMMON_DIR}/include CACHE PATH "Boost include directory")
-set(BOOST_LIBRARYDIR ${COMMON_DIR}/lib/releaselib/linux64 CACHE PATH "Boost library directory")
-set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "Do not search system paths for Boost")
-set(Boost_NO_BOOST_CMAKE ON CACHE BOOL "Do not use Boost's CMake config")
-set(Boost_NO_WARN_NEW_VERSIONS ON)
-# DROGON
-set(DROGON_ROOT ${COMMON_DIR} CACHE PATH "Drogon root directory")
-set(DROGON_INCLUDEDIR ${COMMON_DIR}/include CACHE PATH "Drogon include directory")
-set(DROGON_LIBRARYDIR ${COMMON_DIR}/lib/releaselib/linux64 CACHE PATH "Drogon library directory")
-# TRANTOR
-set(TRANTOR_ROOT ${COMMON_DIR} CACHE PATH "Trantor root directory")
-set(TRANTOR_INCLUDEDIR ${COMMON_DIR}/include CACHE PATH "Trantor include directory")
-set(TRANTOR_LIBRARYDIR ${COMMON_DIR}/lib/releaselib/linux64 CACHE PATH "Trantor library directory")
+# drogon 需要的系统库
+find_package(OpenSSL REQUIRED)
+find_package(ZLIB REQUIRED)
 
-# 传入 CMAKE_PREFIX_PATH
-list(APPEND CMAKE_PREFIX_PATH "${COMMON_DIR}/lib/locallib/linux64/${CMAKE_BUILD_TYPE}")
-list(APPEND CMAKE_PREFIX_PATH "${COMMON_DIR}/lib/releaselib/linux64")
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/20-mtcbb/httpserver/cmake")
+find_library(BROTLIENC_LIB NAMES brotlienc)
+find_library(BROTLIDEC_LIB NAMES brotlidec)
+find_library(BROTLICOMMON_LIB NAMES brotlicommon)
+find_library(UUID_LIB NAMES uuid)
+find_library(SQLITE3_LIB NAMES sqlite3)
 
-include_directories(
-    ${COMMON_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/20-mtcbb/httpserver/include
+message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Third-party Lib Dir: ${COMMON_LIB_DIR}")
 
-)
-link_directories(
-    ${COMMON_DIR}/lib/locallib/linux64/Debug
-    ${COMMON_DIR}/lib/releaselib/linux64
+# ==================== 创建 common_interface ====================
+add_library(common_interface INTERFACE)
+target_include_directories(common_interface 
+    INTERFACE ${COMMON_INCLUDE_DIR}
 )
 
-# ============================================
-# 添加子项目
-# ============================================
-message("Entering 20-mtcbb/mtlog")
+# ==================== 导入第三方库 ====================
+# jsoncpp
+set(JSONCPP_LIB ${COMMON_LIB_DIR}/libjsoncpp.a)
+if(EXISTS ${JSONCPP_LIB})
+    message(STATUS "Found jsoncpp: ${JSONCPP_LIB}")
+    
+    add_library(jsoncpp_lib STATIC IMPORTED GLOBAL)
+    set_target_properties(jsoncpp_lib PROPERTIES
+        IMPORTED_LOCATION ${JSONCPP_LIB}
+    )
+    target_include_directories(jsoncpp_lib INTERFACE ${COMMON_INCLUDE_DIR})
+else()
+    message(WARNING "jsoncpp library not found at ${JSONCPP_LIB}")
+endif()
+
+# trantor (必须在 drogon 之前)
+set(TRANTOR_LIB ${COMMON_LIB_DIR}/libtrantor.a)
+if(EXISTS ${TRANTOR_LIB})
+    message(STATUS "Found trantor: ${TRANTOR_LIB}")
+    
+    add_library(trantor STATIC IMPORTED GLOBAL)
+    set_target_properties(trantor PROPERTIES
+        IMPORTED_LOCATION ${TRANTOR_LIB}
+    )
+    target_include_directories(trantor INTERFACE ${COMMON_INCLUDE_DIR})
+    
+    # trantor 依赖 OpenSSL
+    target_link_libraries(trantor
+        INTERFACE
+            OpenSSL::SSL
+            OpenSSL::Crypto
+    )
+else()
+    message(WARNING "trantor library not found at ${TRANTOR_LIB}")
+endif()
+
+# drogon
+set(DROGON_LIB ${COMMON_LIB_DIR}/libdrogon.a)
+if(EXISTS ${DROGON_LIB})
+    message(STATUS "Found drogon: ${DROGON_LIB}")
+    
+    add_library(drogon STATIC IMPORTED GLOBAL)
+    set_target_properties(drogon PROPERTIES
+        IMPORTED_LOCATION ${DROGON_LIB}
+    )
+    target_include_directories(drogon INTERFACE ${COMMON_INCLUDE_DIR})
+    
+    # drogon 链接所有依赖
+    target_link_libraries(drogon 
+        INTERFACE
+            trantor
+            OpenSSL::SSL
+            OpenSSL::Crypto
+            ZLIB::ZLIB
+            ${BROTLIENC_LIB}
+            ${BROTLIDEC_LIB}
+            ${BROTLICOMMON_LIB}
+            ${UUID_LIB}
+            ${SQLITE3_LIB}
+            pthread
+            dl
+    )
+else()
+    message(WARNING "drogon library not found at ${DROGON_LIB}")
+endif()
+
+# ==================== 项目模块 ====================
 add_subdirectory(20-mtcbb/mtlog)
-
-message("Entering 20-mtcbb/httpserver")
 add_subdirectory(20-mtcbb/httpserver)
-# if(BUILD_DEMO)
-#     add_subdirectory(20-mtcbb/demo)
-# endif()
 
-# if(BUILD_HTTPSERVER)
-# endif()
-
+# ==================== 打印配置信息 ====================
+message(STATUS "========================================")
+message(STATUS "Project Configuration:")
+message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "  Common Include: ${COMMON_INCLUDE_DIR}")
+message(STATUS "  Third-party Lib: ${COMMON_LIB_DIR}")
+message(STATUS "  Project Lib Output: ${COMMON_OUTPUT_DIR}")
+message(STATUS "========================================")

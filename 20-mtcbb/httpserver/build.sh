@@ -7,7 +7,7 @@ set -e  # 遇到错误立即退出
 PROJECT_NAME=$(basename "$PWD")
 COMPILE_OUTPUT_DIR="../../../10-common/version/compileinfo"
 COMPILE_OUTPUT_BASE="${COMPILE_OUTPUT_DIR}/${PROJECT_NAME}_linux64_cmake"
-COMPILE_INSTALL_DIR="../../../10-common/lib/locallib/linux64"
+COMPILE_INSTALL_DIR="../../../10-common/version/bin/"
 
 # 颜色定义
 RED='\033[0;31m'
@@ -97,14 +97,14 @@ build_version() {
     fi
 
     
-    # ninja install > /dev/null 2>&1
+    ninja install > /dev/null 2>&1
     print_step "${version_type} install done"
     
     # 返回上级目录
     cd ..
     
     print_step "${version_type} 版本编译完成"
-    # rm -rf ${build_path}
+    rm -rf ${build_path}
     echo ""
 }
 
