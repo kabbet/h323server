@@ -4,3 +4,6 @@
 [submodule "b0-thirdparty/jsoncpp"]
 	path = b0-thirdparty/jsoncpp
 	url = https://github.com/open-source-parsers/jsoncpp.git
+[submodule "b0-thirdparty/drogon"]
+	path = b0-thirdparty/drogon
+	url = https://github.com/drogonframework/drogon.git
