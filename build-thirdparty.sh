@@ -7,6 +7,9 @@ PROJECT_ROOT=$(pwd)
 
 echo "Building third-party libraries in ${BUILD_TYPE} mode..."
 
+git submodule init
+git submodule update --init --recursive
+
 # 根据构建类型设置目录
 if [ "${BUILD_TYPE}" = "Debug" ]; then
     BUILD_TYPE_LOWER="debug"
