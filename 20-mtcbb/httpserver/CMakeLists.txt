@@ -30,7 +30,45 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     if(NOT Boost_FOUND)
         message(FATAL_ERROR "Boost not found!")
     endif()
-    
+
+    set(POSTGRESQL_ROOT "$ENV{HOME}/.slocal")
+
+    # 验证 PostgreSQL 安装
+    if(EXISTS "${POSTGRESQL_ROOT}/bin/pg_config")
+        # 使用 pg_config 获取准确路径
+        execute_process(
+            COMMAND ${POSTGRESQL_ROOT}/bin/pg_config --includedir
+            OUTPUT_VARIABLE PG_INCLUDE_DIR
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        execute_process(
+            COMMAND ${POSTGRESQL_ROOT}/bin/pg_config --libdir
+            OUTPUT_VARIABLE PG_LIB_DIR
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+
+        message(STATUS "PostgreSQL found via pg_config")
+        message(STATUS "  Include: ${PG_INCLUDE_DIR}")
+        message(STATUS "  Lib: ${PG_LIB_DIR}")
+
+        # 设置 PostgreSQL 变量
+        set(PostgreSQL_INCLUDE_DIR "${PG_INCLUDE_DIR}")
+        set(PostgreSQL_LIBRARY "${PG_LIB_DIR}/libpq.so")
+        set(PostgreSQL_TYPE_INCLUDE_DIR "${PG_INCLUDE_DIR}/server")
+
+        # 手动设置为已找到
+        set(PostgreSQL_FOUND TRUE)
+        set(PostgreSQL_INCLUDE_DIRS "${PG_INCLUDE_DIR}")
+        set(PostgreSQL_LIBRARIES "${PG_LIB_DIR}/libpq.so")
+
+    else()  # ← 修复：添加括号
+        message(FATAL_ERROR
+            "PostgreSQL not found!\n"
+            "Checked: ${POSTGRESQL_ROOT}/bin/pg_config\n"
+            "Please verify stow installation: ls -la ~/.slocal/bin/pg_config"
+        )
+    endif()
+
     # 查找 drogon 需要的系统库
     find_package(OpenSSL REQUIRED)
     find_package(ZLIB REQUIRED)
@@ -40,6 +78,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     find_library(BROTLICOMMON_LIB NAMES brotlicommon)
     find_library(UUID_LIB NAMES uuid)
     find_library(SQLITE3_LIB NAMES sqlite3)
+    find_package(PostgreSQL REQUIRED)
+
     
     message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
     message(STATUS "Third-party Lib Dir: ${COMMON_LIB_DIR}")
@@ -170,6 +210,7 @@ endif()
 # ==================== httpserver 可执行文件 ====================
 file(GLOB_RECURSE HTTPSERVER_SOURCES 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/models/*.cc
 )
 
 if(NOT HTTPSERVER_SOURCES)
@@ -180,6 +221,7 @@ add_executable(httpserver ${HTTPSERVER_SOURCES})
 
 target_include_directories(httpserver 
     PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/source
 )
@@ -191,6 +233,7 @@ target_link_libraries(httpserver
         mtlog
         drogon
         jsoncpp_lib
+        ${PostgreSQL_LIBRARIES}
 )
 
 target_compile_options(httpserver PRIVATE

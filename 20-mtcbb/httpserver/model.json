@@ -1,0 +1,11 @@
+{
+    "rdbms": "postgresql",
+    "host": "127.0.0.1",
+    "port": 5432,
+    "dbname": "myapp",
+    "user": "neil",
+    "passwd": "Rg.mo.33",
+    "tables": [],
+    "convert_method": "snake",
+    "output_dir": "./models"
+}
