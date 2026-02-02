@@ -5,6 +5,22 @@ set -e
 BUILD_TYPE=${1:-Debug}
 PROJECT_ROOT=$(pwd)
 
+# 检查系统是否安装了 libjsoncpp-dev
+if dpkg -l | grep -q libjsoncpp-dev; then
+    echo "========================================="
+    echo "警告: 检测到系统安装了 libjsoncpp-dev"
+    echo "这可能导致 drogon 使用系统版本而非自定义版本"
+    echo "========================================="
+    read -p "是否临时卸载系统的 libjsoncpp-dev? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        sudo apt-get remove -y libjsoncpp-dev
+        REINSTALL_JSONCPP=true
+    else
+        echo "继续编译，但可能出现版本冲突..."
+    fi
+fi
+
 echo "Building third-party libraries in ${BUILD_TYPE} mode..."
 
 git submodule init
@@ -37,61 +53,43 @@ echo "========================================="
 echo "Building jsoncpp (${BUILD_TYPE})..."
 echo "========================================="
 cd b0-thirdparty/jsoncpp
-echo "正在检查 jsoncpp 的 C++ 标准设置..."
-echo "========================================"
 
-# 检查并替换 CMAKE_CXX_STANDARD 11
-if grep -q "CMAKE_CXX_STANDARD 11" CMakeLists.txt; then
-    echo "✓ 找到 CMAKE_CXX_STANDARD 11，正在替换为 17..."
-    sed -i 's/CMAKE_CXX_STANDARD 11/CMAKE_CXX_STANDARD 17/g' CMakeLists.txt
-    echo "  替换成功"
-else
-    echo "✗ 未找到 CMAKE_CXX_STANDARD 11"
-fi
-
-# 检查并替换 -std=c++11
-if grep -q "\-std=c++11" CMakeLists.txt; then
-    echo "✓ 找到 -std=c++11，正在替换为 -std=c++17..."
-    sed -i 's/-std=c++11/-std=c++17/g' CMakeLists.txt
-    echo "  替换成功"
-else
-    echo "✗ 未找到 -std=c++11"
-fi
-
-echo "========================================"
-echo "检查完成，当前 C++ 标准设置："
-grep -n "CXX_STANDARD\|std=c++" CMakeLists.txt | head -5
+echo "检查并修复 jsoncpp C++ 标准设置..."
+# 强制设置 C++17
+sed -i 's/CMAKE_CXX_STANDARD [0-9]\+/CMAKE_CXX_STANDARD 17/g' CMakeLists.txt
+sed -i 's/-std=c++[0-9]\+/-std=c++17/g' CMakeLists.txt
 
 rm -rf build-${BUILD_TYPE}
 mkdir build-${BUILD_TYPE} && cd build-${BUILD_TYPE}
 
 cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+      -DCMAKE_CXX_STANDARD=17 \
+      -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DJSONCPP_WITH_TESTS=OFF \
       -DJSONCPP_WITH_POST_BUILD_UNITTEST=OFF \
       -DBUILD_SHARED_LIBS=OFF \
       -DBUILD_OBJECT_LIBS=OFF \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
       -DCMAKE_INSTALL_PREFIX=/tmp/jsoncpp-install-${BUILD_TYPE} \
       ..
 
 make -j$(nproc)
 make install
 
-# 拷贝头文件到统一位置（只在第一次构建时）
-if [ ! -d "${THIRDPARTY_INCLUDE_DIR}/json" ]; then
-    echo "Installing jsoncpp headers to ${THIRDPARTY_INCLUDE_DIR}"
-    cp -r /tmp/jsoncpp-install-${BUILD_TYPE}/include/json ${THIRDPARTY_INCLUDE_DIR}/
-fi
-
-# 拷贝库文件到对应的 debug/release 目录
-echo "Installing jsoncpp library to ${THIRDPARTY_LIB_DIR}"
+# 拷贝文件
+echo "Installing jsoncpp to ${THIRDPARTY_INCLUDE_DIR} and ${THIRDPARTY_LIB_DIR}"
+rm -rf ${THIRDPARTY_INCLUDE_DIR}/json
+cp -r /tmp/jsoncpp-install-${BUILD_TYPE}/include/json ${THIRDPARTY_INCLUDE_DIR}/
 cp /tmp/jsoncpp-install-${BUILD_TYPE}/lib/libjsoncpp.a ${THIRDPARTY_LIB_DIR}/
 
-# 清理临时目录
-rm -rf /tmp/jsoncpp-install-${BUILD_TYPE}
+# 验证
+JSONCPP_STD=$(strings ${THIRDPARTY_LIB_DIR}/libjsoncpp.a | grep "std=c++" | head -1)
+echo "jsoncpp 编译标准: $JSONCPP_STD"
 
 cd ${PROJECT_ROOT}
 
 # ==================== 构建 drogon ====================
+echo ""
 echo "========================================="
 echo "Building drogon (${BUILD_TYPE})..."
 echo "========================================="
@@ -99,43 +97,61 @@ cd b0-thirdparty/drogon
 rm -rf build-${BUILD_TYPE}
 mkdir build-${BUILD_TYPE} && cd build-${BUILD_TYPE}
 
+# 只使用 CMAKE_PREFIX_PATH，让 CMake 自动查找
 cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+      -DCMAKE_CXX_STANDARD=17 \
+      -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DBUILD_EXAMPLES=OFF \
       -DBUILD_TESTING=OFF \
-      -DBUILD_DROGON_SHARED=OFF \
       -DBUILD_CTL=OFF \
       -DBUILD_ORM=ON \
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+      -DCMAKE_PREFIX_PATH="/tmp/jsoncpp-install-${BUILD_TYPE}" \
       -DCMAKE_INSTALL_PREFIX=/tmp/drogon-install-${BUILD_TYPE} \
-      ..
+      .. 2>&1 | tee cmake-output.log
 
-make -j$(nproc)
-make install
-
-# 拷贝头文件到统一位置（只在第一次构建时）
-if [ ! -d "${THIRDPARTY_INCLUDE_DIR}/drogon" ]; then
-    echo "Installing drogon headers to ${THIRDPARTY_INCLUDE_DIR}"
-    cp -r /tmp/drogon-install-${BUILD_TYPE}/include/drogon ${THIRDPARTY_INCLUDE_DIR}/
-    cp -r /tmp/drogon-install-${BUILD_TYPE}/include/trantor ${THIRDPARTY_INCLUDE_DIR}/
+echo ""
+echo "检查 drogon 使用的 jsoncpp："
+if grep -q "/tmp/jsoncpp-install-${BUILD_TYPE}" CMakeCache.txt; then
+    echo "✓ drogon 正确使用自定义 jsoncpp"
+    grep "Jsoncpp" CMakeCache.txt | grep -v "^#"
+else
+    echo "✗ 错误: drogon 未使用自定义 jsoncpp"
+    echo "CMake 输出已保存到 cmake-output.log"
+    exit 1
 fi
 
-# 拷贝库文件到对应的 debug/release 目录
-echo "Installing drogon libraries to ${THIRDPARTY_LIB_DIR}"
+make -j$(nproc) 2>&1 | tee build-output.log
+make install
+
+# 拷贝文件
+echo ""
+echo "Installing drogon to ${THIRDPARTY_INCLUDE_DIR} and ${THIRDPARTY_LIB_DIR}"
+rm -rf ${THIRDPARTY_INCLUDE_DIR}/drogon ${THIRDPARTY_INCLUDE_DIR}/trantor
+cp -r /tmp/drogon-install-${BUILD_TYPE}/include/drogon ${THIRDPARTY_INCLUDE_DIR}/
+cp -r /tmp/drogon-install-${BUILD_TYPE}/include/trantor ${THIRDPARTY_INCLUDE_DIR}/
 cp /tmp/drogon-install-${BUILD_TYPE}/lib/libdrogon.a ${THIRDPARTY_LIB_DIR}/
 cp /tmp/drogon-install-${BUILD_TYPE}/lib/libtrantor.a ${THIRDPARTY_LIB_DIR}/
 
-# 清理临时目录
-rm -rf /tmp/drogon-install-${BUILD_TYPE}
+# 验证
+DROGON_STD=$(strings ${THIRDPARTY_LIB_DIR}/libdrogon.a | grep "std=c++" | head -1)
+echo "drogon 编译标准: $DROGON_STD"
 
 cd ${PROJECT_ROOT}
 
-echo "========================================="
-echo "Third-party libraries built successfully!"
-echo "========================================="
-echo "Headers installed to: ${THIRDPARTY_INCLUDE_DIR}"
-echo "  - json/"
-echo "  - drogon/"
-echo "  - trantor/"
+# 恢复系统的 jsoncpp（如果之前卸载了）
+if [ "$REINSTALL_JSONCPP" = true ]; then
+    echo ""
+    echo "重新安装系统的 libjsoncpp-dev..."
+    sudo apt-get install -y libjsoncpp-dev
+fi
+
 echo ""
-echo "Libraries installed to: ${THIRDPARTY_LIB_DIR}"
-ls -lh ${THIRDPARTY_LIB_DIR}/*.a 2>/dev/null || echo "  (no libraries found)"
+echo "========================================="
+echo "编译完成！"
+echo "========================================="
+echo "jsoncpp: $(echo $JSONCPP_STD | grep -o 'std=c++[0-9]*')"
+echo "drogon:  $(echo $DROGON_STD | grep -o 'std=c++[0-9]*')"
+echo "========================================="
+ls -lh ${THIRDPARTY_LIB_DIR}/*.a
 echo "========================================="
