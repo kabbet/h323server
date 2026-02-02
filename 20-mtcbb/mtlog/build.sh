@@ -7,7 +7,7 @@ set -e  # 遇到错误立即退出
 PROJECT_NAME=$(basename "$PWD")
 COMPILE_OUTPUT_DIR="../../../10-common/version/compileinfo"
 COMPILE_OUTPUT_BASE="${COMPILE_OUTPUT_DIR}/${PROJECT_NAME}_linux64_cmake"
-COMPILE_INSTALL_DIR="../../../10-common/lib/locallib/linux64"
+COMPILE_INSTALL_DIR="../../10-common/lib/locallib/linux64"
 
 # 颜色定义
 RED='\033[0;31m'
@@ -53,6 +53,9 @@ build_version() {
     print_info "创建构建目录: ${build_path}"
     mkdir -p "${build_path}"
     cd "${build_path}"
+
+    # 确保输出目录存在
+    mkdir -p "${COMPILE_OUTPUT_DIR}"
     
     # CMake 配置
     print_info "CMake 配置中..."
@@ -117,10 +120,7 @@ main() {
     print_step "编译输出: ${COMPILE_OUTPUT_DIR}"
     print_step "=========================================="
     echo ""
-    
-    # 确保输出目录存在
-    mkdir -p "${COMPILE_OUTPUT_DIR}"
-    
+   
     # 编译 Debug 版本
     if ! build_version "Debug"; then
         print_error "Debug 版本编译失败"

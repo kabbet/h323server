@@ -53,6 +53,10 @@ build_version() {
     print_info "创建构建目录: ${build_path}"
     mkdir -p "${build_path}"
     cd "${build_path}"
+
+    # 确保输出目录存在
+    mkdir -p "${COMPILE_OUTPUT_DIR}"
+ 
     
     # CMake 配置
     print_info "CMake 配置中..."
@@ -62,7 +66,7 @@ build_version() {
                 -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
                 -DCMAKE_INSTALL_PREFIX=${COMPILE_INSTALL_DIR}/$1 \
                 -DCMAKE_BUILD_TYPE="${version_type}" \
-                .. > /dev/null 2>&1 || {
+                .. > /dev/null || {
                 print_error "CMake 配置失败"
                 cd ..
                 return 1
@@ -104,7 +108,7 @@ build_version() {
     cd ..
     
     print_step "${version_type} 版本编译完成"
-    rm -rf ${build_path}
+    #rm -rf ${build_path}
     echo ""
 }
 
@@ -118,9 +122,7 @@ main() {
     print_step "=========================================="
     echo ""
     
-    # 确保输出目录存在
-    mkdir -p "${COMPILE_OUTPUT_DIR}"
-    
+   
     # 编译 Debug 版本
     if ! build_version "Debug"; then
         print_error "Debug 版本编译失败"
@@ -128,10 +130,10 @@ main() {
     fi
     
     # 编译 Release 版本
-    if ! build_version "Release"; then
-        print_error "Release 版本编译失败"
-        exit 1
-    fi
+    # if ! build_version "Release"; then
+    #     print_error "Release 版本编译失败"
+    #     exit 1
+    # fi
     
     # 计算总耗时
     local end_time=$(date +%s)
