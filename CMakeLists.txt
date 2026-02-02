@@ -84,20 +84,28 @@ else()
     message(WARNING "trantor library not found at ${TRANTOR_LIB}")
 endif()
 
-# drogon
 set(DROGON_LIB ${COMMON_LIB_DIR}/libdrogon.a)
 if(EXISTS ${DROGON_LIB})
     message(STATUS "Found drogon: ${DROGON_LIB}")
-    
-    add_library(drogon STATIC IMPORTED GLOBAL)
+
+    add_library(drogon STATIC IMPORTED)
     set_target_properties(drogon PROPERTIES
         IMPORTED_LOCATION ${DROGON_LIB}
     )
-    target_include_directories(drogon INTERFACE ${COMMON_INCLUDE_DIR})
-    
-    # drogon 链接所有依赖
-    target_link_libraries(drogon 
+    target_include_directories(drogon
+        INTERFACE ${COMMON_INCLUDE_DIR}
+    )
+
+    # 查找 hiredis 库
+    find_library(HIREDIS_LIB NAMES hiredis)
+    if(NOT HIREDIS_LIB)
+        message(WARNING "hiredis not found, if you use Redis features, install it with: sudo apt-get install libhiredis-dev")
+    endif()
+
+    # drogon 需要链接所有依赖
+    target_link_libraries(drogon
         INTERFACE
+            jsoncpp_lib          # 添加这行 - jsoncpp 必须在前面
             trantor
             OpenSSL::SSL
             OpenSSL::Crypto
@@ -107,11 +115,15 @@ if(EXISTS ${DROGON_LIB})
             ${BROTLICOMMON_LIB}
             ${UUID_LIB}
             ${SQLITE3_LIB}
+            ${HIREDIS_LIB}       # 添加这行
             pthread
             dl
     )
 else()
-    message(WARNING "drogon library not found at ${DROGON_LIB}")
+    message(FATAL_ERROR
+        "drogon library not found at ${DROGON_LIB}\n"
+        "Please run: ./build-thirdparty.sh ${CMAKE_BUILD_TYPE}"
+    )
 endif()
 
 # ==================== 项目模块 ====================
