@@ -33,6 +33,10 @@ echo "  Library: ${THIRDPARTY_LIB_DIR}"
 echo "========================================="
 
 # ==================== 构建 jsoncpp ====================
+echo "========================================="
+echo "Building jsoncpp (${BUILD_TYPE})..."
+echo "========================================="
+cd b0-thirdparty/jsoncpp
 echo "正在检查 jsoncpp 的 C++ 标准设置..."
 echo "========================================"
 
@@ -58,14 +62,10 @@ echo "========================================"
 echo "检查完成，当前 C++ 标准设置："
 grep -n "CXX_STANDARD\|std=c++" CMakeLists.txt | head -5
 
-echo "========================================="
-echo "Building jsoncpp (${BUILD_TYPE})..."
-echo "========================================="
-cd b0-thirdparty/jsoncpp
 rm -rf build-${BUILD_TYPE}
 mkdir build-${BUILD_TYPE} && cd build-${BUILD_TYPE}
 
-CXXFLAGS="-std=c++17" cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
       -DJSONCPP_WITH_TESTS=OFF \
       -DJSONCPP_WITH_POST_BUILD_UNITTEST=OFF \
       -DBUILD_SHARED_LIBS=OFF \
