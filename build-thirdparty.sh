@@ -33,6 +33,31 @@ echo "  Library: ${THIRDPARTY_LIB_DIR}"
 echo "========================================="
 
 # ==================== 构建 jsoncpp ====================
+echo "正在检查 jsoncpp 的 C++ 标准设置..."
+echo "========================================"
+
+# 检查并替换 CMAKE_CXX_STANDARD 11
+if grep -q "CMAKE_CXX_STANDARD 11" CMakeLists.txt; then
+    echo "✓ 找到 CMAKE_CXX_STANDARD 11，正在替换为 17..."
+    sed -i 's/CMAKE_CXX_STANDARD 11/CMAKE_CXX_STANDARD 17/g' CMakeLists.txt
+    echo "  替换成功"
+else
+    echo "✗ 未找到 CMAKE_CXX_STANDARD 11"
+fi
+
+# 检查并替换 -std=c++11
+if grep -q "\-std=c++11" CMakeLists.txt; then
+    echo "✓ 找到 -std=c++11，正在替换为 -std=c++17..."
+    sed -i 's/-std=c++11/-std=c++17/g' CMakeLists.txt
+    echo "  替换成功"
+else
+    echo "✗ 未找到 -std=c++11"
+fi
+
+echo "========================================"
+echo "检查完成，当前 C++ 标准设置："
+grep -n "CXX_STANDARD\|std=c++" CMakeLists.txt | head -5
+
 echo "========================================="
 echo "Building jsoncpp (${BUILD_TYPE})..."
 echo "========================================="
@@ -40,7 +65,7 @@ cd b0-thirdparty/jsoncpp
 rm -rf build-${BUILD_TYPE}
 mkdir build-${BUILD_TYPE} && cd build-${BUILD_TYPE}
 
-cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+CXXFLAGS="-std=c++17" cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
       -DJSONCPP_WITH_TESTS=OFF \
       -DJSONCPP_WITH_POST_BUILD_UNITTEST=OFF \
       -DBUILD_SHARED_LIBS=OFF \
