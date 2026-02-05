@@ -1,8 +1,8 @@
 {
     "app": {
         "threads_num": 8,
-        "enable_session": true,
-        "session_timeout": 1200
+        "enable_session": false,
+        "session_timeout": 0
     },
     "listeners": [
         {
@@ -26,19 +26,24 @@
             "client_encoding": "utf8"
         }
     ],
-    "redis": {
-        "host": "0.0.0.0",
+    "redis_clients": [
+      {
+        "name": "default",
+        "host": "127.0.0.1",
         "port": 6379,
-        "passwd": "Rg.mo.33",
         "db": 0,
-        "is_fast": false,
-        "number_of_connections": 5,
-        "timeout": 10.0
-    },
-    "log": {
-        "log_path": "./logs",
-        "logfile_base_name": "drogon",
-        "log_size_limit": 100000000,
-        "log_level": "TRACE"
-    }
+        "passwd": "Rg.mo.33",
+        "number_of_connections": 1,
+        "timeout": -1.0
+      },
+      {
+        "name": "subscriber",
+        "host": "127.0.0.1",
+        "port": 6379,
+        "db": 0,
+        "passwd": "Rg.mo.33",
+        "number_of_connections": 1,
+        "timeout": -1.0
+      }
+    ]
 }

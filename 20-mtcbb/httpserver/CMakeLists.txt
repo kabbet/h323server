@@ -31,7 +31,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         message(FATAL_ERROR "Boost not found!")
     endif()
 
-    set(POSTGRESQL_ROOT "$ENV{HOME}/.slocal")
+
+    set(POSTGRESQL_ROOT "$ENV{PG_HOME}")
 
     # 验证 PostgreSQL 安装
     if(EXISTS "${POSTGRESQL_ROOT}/bin/pg_config")
@@ -68,6 +69,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
             "Please verify stow installation: ls -la ~/.slocal/bin/pg_config"
         )
     endif()
+
 
     # 查找 drogon 需要的系统库
     find_package(OpenSSL REQUIRED)
@@ -145,12 +147,21 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
             INTERFACE ${COMMON_INCLUDE_DIR}
         )
     
-        # 查找 hiredis 库
-        find_library(HIREDIS_LIB NAMES hiredis)
-        if(NOT HIREDIS_LIB)
-            message(WARNING "hiredis not found, if you use Redis features, install it with: sudo apt-get install libhiredis-dev")
-        endif()
-    
+         set(HIREDIS_ROOT "$ENV{HIREDIS_HOME}")
+
+         # 验证 HIREDIS 安装
+         if(EXISTS "${HIREDIS_ROOT}")
+             # 设置 HIREDIS 变量
+             set(HIREDIS_INCLUDE_DIR "${HIREDIS_ROOT}/include")
+             set(HIREDIS_LIBRARY "${HIREDIS_ROOT}/lib/libhiredis.so")
+
+         else()
+             message(FATAL_ERROR
+                 "HIREDIS not found!\n"
+                 "Checked: ${HIREDIS_ROOT}/\n"
+             )
+         endif()
+
         # drogon 需要链接所有依赖
         target_link_libraries(drogon
             INTERFACE
@@ -164,7 +175,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
                 ${BROTLICOMMON_LIB}
                 ${UUID_LIB}
                 ${SQLITE3_LIB}
-                ${HIREDIS_LIB}       # 添加这行
+                ${HIREDIS_LIBRARY}
                 pthread
                 dl
         )
