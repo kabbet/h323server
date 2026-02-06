@@ -1,5 +1,6 @@
 #include "RedisUtils.hpp"
 #include "LuaScriptManager.hpp"
+#include <cctype>
 #include <cstddef>
 #include <drogon/nosql/RedisResult.h>
 #include <exception>
@@ -9,6 +10,41 @@
 #include <stdexcept>
 #include <string>
 #include <trantor/utils/Logger.h>
+
+namespace {
+    inline void trim_inplace(std::string& s) {
+        size_t b = 0, e = s.size();
+        while ( b < e && std::isspace(static_cast<unsigned char>(s[b])) ) ++b;
+        while ( e > b && std::isspace(static_cast<unsigned char>(s[e-1])) ) --e;
+        if (b != 0 || e != s.size()) s = s.substr(b, e-b);
+    }
+
+    inline void strip_quotes_inplace(std::string& s) {
+        if (s.size() >=2 && s.front() == '"' && s.back() == '"') {
+            s = s.substr(1, s.size() - 2);
+        }
+    }
+    inline void unescape_basic_inplace(std::string& s) {
+        std::string out;
+        out.reserve(s.size());
+        for (size_t i = 0; i < s.size(); ++i) {
+            if (s[i] == '\\' && i + 1 < s.size()) {
+                char n = s[i+1];
+                if (n == '"') { out.push_back('"'); ++i; continue; }
+                if (n == '\\') { out.push_back('\\'); ++i; continue; }
+            }
+            out.push_back(s[i]);
+        }
+        s.swap(out);
+    }
+    inline void normalize_redis_message(std::string& s) {
+        trim_inplace(s);
+        unescape_basic_inplace(s);
+        trim_inplace(s);
+        strip_quotes_inplace(s);
+        trim_inplace(s);
+    }
+}
 
 std::atomic<bool> RedisUtils::scriptsLoaded_ = false;
 
@@ -403,11 +439,13 @@ void RedisUtils::subscribeTokenExpiration(
         channel, [onExpired](const std::string& channel, const std::string& message) {
             // message 就是过期的键名
             LOG_INFO << "Redis key expired on channel " << channel << ": " << message;
+            std::string tmp_msg = message;
+            normalize_redis_message(tmp_msg);
 
             // 检查是否是 token 键
-            if (message.find("token:") == 0) {
+            if (tmp_msg.find("token:") == 0) {
                 // 提取 token（去掉 "token:" 前缀）
-                std::string token = message.substr(6);
+                std::string token = tmp_msg.substr(6);
                 LOG_INFO << "Token expired: " << token;
 
                 // 调用回调处理过期的 token
