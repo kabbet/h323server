@@ -9,9 +9,12 @@
 [submodule "b0-thirdparty/ptlib"]
 	path = b0-thirdparty/ptlib
 	url = https://github.com/willamowius/ptlib.git
+    ignore = all
 [submodule "b0-thirdparty/h323plus"]
 	path = b0-thirdparty/h323plus
 	url = https://github.com/willamowius/h323plus.git
+    ignore = all
 [submodule "b0-thirdparty/gnugk"]
 	path = b0-thirdparty/gnugk
 	url = https://github.com/willamowius/gnugk.git
+    ignore = all
