@@ -36,16 +36,20 @@ fi
 # 安装路径（区分 debug/release）
 THIRDPARTY_INCLUDE_DIR="${PROJECT_ROOT}/10-common/include"
 THIRDPARTY_LIB_DIR="${PROJECT_ROOT}/10-common/lib/releaselib/linux64/${BUILD_TYPE_LOWER}"
+THIRDPARTY_BIN_DIR="${PROJECT_ROOT}/10-common/version/bin/${BUILD_TYPE_LOWER}" 
+
 
 # 创建目录
 mkdir -p ${THIRDPARTY_INCLUDE_DIR}
 mkdir -p ${THIRDPARTY_LIB_DIR}
+mkdir -p ${THIRDPARTY_BIN_DIR}
 
 echo "========================================="
 echo "Build Configuration:"
 echo "  Type: ${BUILD_TYPE}"
 echo "  Include: ${THIRDPARTY_INCLUDE_DIR}"
 echo "  Library: ${THIRDPARTY_LIB_DIR}"
+echo "  Binary: ${THIRDPARTY_BIN_DIR}" 
 echo "========================================="
 
 # ==================== 构建 jsoncpp ====================
@@ -103,7 +107,6 @@ cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
       -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DBUILD_EXAMPLES=OFF \
       -DBUILD_TESTING=OFF \
-      -DBUILD_CTL=OFF \
       -DBUILD_ORM=ON \
       -DPostgreSQL_ROOT=$PG_HOME \
       -DPostgreSQL_INCLUDE_DIR=$PG_HOME/include \
@@ -138,6 +141,14 @@ cp -r /tmp/drogon-install-${BUILD_TYPE}/include/drogon ${THIRDPARTY_INCLUDE_DIR}
 cp -r /tmp/drogon-install-${BUILD_TYPE}/include/trantor ${THIRDPARTY_INCLUDE_DIR}/
 cp /tmp/drogon-install-${BUILD_TYPE}/lib/libdrogon.a ${THIRDPARTY_LIB_DIR}/
 cp /tmp/drogon-install-${BUILD_TYPE}/lib/libtrantor.a ${THIRDPARTY_LIB_DIR}/
+
+# 复制 bin 文件（如果存在）
+if [ -d "/tmp/drogon-install-${BUILD_TYPE}/bin" ]; then
+    echo "Installing drogon binaries to ${THIRDPARTY_BIN_DIR}"
+    cp -r /tmp/drogon-install-${BUILD_TYPE}/bin/* ${THIRDPARTY_BIN_DIR}/
+    echo "Installed binaries:"
+    ls -lh ${THIRDPARTY_BIN_DIR}
+fi
 
 # 验证
 DROGON_STD=$(strings ${THIRDPARTY_LIB_DIR}/libdrogon.a | grep "std=c++" | head -1)
