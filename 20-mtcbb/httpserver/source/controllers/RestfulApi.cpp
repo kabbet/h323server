@@ -1,6 +1,7 @@
-// source/RestfulApi.cpp - 极简的Controller层
 #include "RestfulApi.hpp"
 #include "LoginHandler.hpp"
+#include "GetInfoHandler.hpp"
+#include "ServiceContainer.hpp"
 #include <json/value.h>
 
 using namespace api::v1;
@@ -30,8 +31,16 @@ void User::login(const HttpRequestPtr& req,
         return;
     }
 
-    // 委托给Handler处理
-    handler::LoginHandler::handle(userId, password, std::move(callback));
+    // 从容器获取服务（依赖注入）
+    auto userService = ServiceContainer::instance().getUserService();
+
+    // 委托给 Handler 处理
+    handlers::LoginHandler::handle(
+        userService,
+        userId,
+        password,
+        std::move(callback)
+    );
 }
 
 void User::getInfo(const HttpRequestPtr& req,
@@ -48,6 +57,14 @@ void User::getInfo(const HttpRequestPtr& req,
         return;
     }
 
-    // 委托给Handler处理
-    handler::GetInfoHandler::handle(userId, token, std::move(callback));
+    // 从容器获取服务
+    auto userService = ServiceContainer::instance().getUserService();
+
+    // 委托给 Handler 处理
+    handlers::GetInfoHandler::handle(
+        userService,
+        userId,
+        token,
+        std::move(callback)
+    );
 }

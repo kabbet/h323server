@@ -221,7 +221,6 @@ endif()
 # ==================== httpserver 可执行文件 ====================
 file(GLOB_RECURSE HTTPSERVER_SOURCES 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/models/*.cc
 )
 
 if(NOT HTTPSERVER_SOURCES)
@@ -234,7 +233,15 @@ target_include_directories(httpserver
     PRIVATE 
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/source
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/adapters
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/controllers
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/handlers
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/infrastructure
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/interfaces
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/models
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/repositories
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/services
+
 )
 
 # 注意链接顺序：从高层到低层
