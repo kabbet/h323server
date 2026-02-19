@@ -3,27 +3,28 @@
 #include "UserRepository.hpp"
 #include "RedisClientAdapter.hpp"
 #include "RedisUtils.hpp"
+#include "SystemService.hpp"
 #include <drogon/HttpAppFramework.h>
 
 void ServiceContainer::initialize()
 {
     LOG_INFO << "Initializing ServiceContainer...";
 
-    // 创建数据库客户端
     auto dbClient = drogon::app().getDbClient();
+    userRepo_     = std::make_shared<repositories::UserRepository>(dbClient);
 
-    // 创建 Repository
-    userRepo_ = std::make_shared<repositories::UserRepository>(dbClient);
-
-    // 创建 Redis 客户端适配器
-    redisClient_ = std::make_shared<adapters::RedisClientAdapter>(
+    auto redisAdapter = std::make_shared<adapters::RedisClientAdapter>(
         RedisUtils::instance()
     );
+    redisClient_ = redisAdapter;
 
-    // 创建 UserService（注入依赖）
-    userService_ = std::make_shared<services::UserService>(
-        userRepo_,
-        redisClient_
+    userService_ = std::make_shared<services::UserService>(userRepo_, redisAdapter);
+
+    services::SystemService::LicenseMap licenses = {
+        {"your_software_key", "your_software_secret"},
+    };
+    systemService_ = std::make_shared<services::SystemService>(
+        userRepo_, redisAdapter, std::move(licenses)
     );
 
     LOG_INFO << "ServiceContainer initialized successfully";

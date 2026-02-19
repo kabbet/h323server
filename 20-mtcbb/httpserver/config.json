@@ -4,6 +4,17 @@
         "enable_session": false,
         "session_timeout": 0
     },
+    "filters": [
+        {
+          "name": "ApiLevelFilter",
+          "url_regexp": ["/api/v1/.*"]
+        },
+        {
+          "name": "AuthFilter",
+          "url_regexp": ["/api/v1/(?!system/token|system/version).*"]
+        }
+    ],
+
     "listeners": [
         {
             "address": "0.0.0.0",

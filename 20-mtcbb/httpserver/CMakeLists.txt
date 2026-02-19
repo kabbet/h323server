@@ -241,7 +241,7 @@ target_include_directories(httpserver
         ${CMAKE_CURRENT_SOURCE_DIR}/include/models
         ${CMAKE_CURRENT_SOURCE_DIR}/include/repositories
         ${CMAKE_CURRENT_SOURCE_DIR}/include/services
-
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/filters
 )
 
 # 注意链接顺序：从高层到低层

@@ -538,7 +538,6 @@ class H323SecureCapability : public H323SecureRealTimeCapability
    functions as required for describing a codec.
  */
 
-#if 0
 class H323SecureExtendedCapability  : public H323ExtendedVideoCapability
 {
 public:
@@ -790,7 +789,6 @@ protected:
     RTP_QOS * nrtpqos;                   /// RTP QOS
     PString   m_algorithm;               /// Algorithm for encryption
 };
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /**This class describes the secure interface to a data codec that has channels based on

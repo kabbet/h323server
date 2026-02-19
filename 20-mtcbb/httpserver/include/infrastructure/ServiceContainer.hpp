@@ -5,6 +5,8 @@
 #include "interfaces/IUserService.hpp"
 #include "interfaces/IUserRepository.hpp"
 #include "interfaces/IRedisClient.hpp"
+#include "interfaces/ISystemService.hpp"
+
 
 class ServiceContainer {
 public:
@@ -27,6 +29,10 @@ public:
         return redisClient_;
     }
 
+    std::shared_ptr<interfaces::ISystemService> getSystemService() {
+        return systemService_;
+    }
+
     // 用于测试：设置 Mock 对象
     void setUserService(std::shared_ptr<interfaces::IUserService> service) {
         userService_ = service;
@@ -40,12 +46,17 @@ public:
         redisClient_ = client;
     }
 
+    void setSystemService(std::shared_ptr<interfaces::ISystemService> s) {
+        systemService_ = s;
+    }
+
 private:
     ServiceContainer() = default;
 
     std::shared_ptr<interfaces::IUserService> userService_;
     std::shared_ptr<interfaces::IUserRepository> userRepo_;
     std::shared_ptr<interfaces::IRedisClient> redisClient_;
+    std::shared_ptr<interfaces::ISystemService> systemService_;
 };
 
 #endif
