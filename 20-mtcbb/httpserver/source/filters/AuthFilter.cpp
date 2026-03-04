@@ -1,10 +1,8 @@
 #include "filters/AuthFilter.hpp"
 #include <trantor/utils/Logger.h>
 
-void AuthFilter::doFilter(
-    const HttpRequestPtr& req,
-    FilterCallback&&      fcb,
-    FilterChainCallback&& fccb)
+void AuthFilter::doFilter(const HttpRequestPtr& req, FilterCallback&& fcb,
+                          FilterChainCallback&& fccb)
 {
     const std::string path = req->path();
 
@@ -32,13 +30,12 @@ void AuthFilter::doFilter(
     systemService_->validateSession(
         accountToken,
         ssoCookie,
-        [fccb = std::move(fccb)]() mutable {
+        [fccb = std::move(fccb)](const interfaces::ISystemService::SessionInfo&) mutable {
             // 验证通过，继续处理请求
             fccb();
         },
         [fcb = std::move(fcb)](const std::string& msg, int /*code*/) mutable {
             LOG_WARN << "[AuthFilter] 鉴权失败: " << msg;
             fcb(makeUnauthorized(msg));
-        }
-    );
+        });
 }

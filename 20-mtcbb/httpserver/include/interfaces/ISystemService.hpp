@@ -14,6 +14,16 @@ public:
     using ErrorCallback = std::function<void(const std::string& message, int errorCode)>;
     using SuccessCallback = std::function<void()>;
 
+    /**
+     * 会话验证回调, 携带 domainId 和username
+     * 供 /internal/session/validate 接口使用
+     */
+    struct SessionInfo {
+        std::string domainId;
+        std::string username;
+    };
+    using ValidateCallback = std::function<void(const SessionInfo& info) >;
+
     /** 鉴权
      * 验证 oath_consumer_key + oauth_consumer_secret
      * 成功后返回 account_token
@@ -51,7 +61,7 @@ public:
     virtual void validateSession(
         const std::string& accountToken,
         const std::string& ssoCookie,
-        SuccessCallback onSuccess,
+        ValidateCallback onSuccess,
         ErrorCallback onError)
         = 0;
 };

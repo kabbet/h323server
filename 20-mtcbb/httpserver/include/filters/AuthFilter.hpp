@@ -17,6 +17,11 @@ using namespace drogon;
  *
  * 使用方式（在 Controller 中声明）：
  *   ADD_FILTER(AuthFilter);
+ *
+ * 白名单
+ *  /api/v1/system/token
+ *  /api/v1/system/version
+ *  /internal/*             <- 内部接口由网络保护，不走Cookie 鉴权
  */
 class AuthFilter : public HttpFilter<AuthFilter> {
 public:
@@ -33,7 +38,8 @@ private:
     // 不需要鉴权的白名单路径
     static bool isWhitelisted(const std::string& path) {
         return path == "/api/v1/system/token"
-            || path == "/api/v1/system/version";
+            || path == "/api/v1/system/version"
+            || path.rfind("/internal/", 0) == 0;  // /internal/* 全部放行
     }
 
     static HttpResponsePtr makeUnauthorized(const std::string& msg) {

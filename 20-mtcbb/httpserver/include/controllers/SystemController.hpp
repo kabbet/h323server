@@ -4,6 +4,7 @@
 #include <drogon/HttpController.h>
 #include "interfaces/ISystemService.hpp"
 #include "infrastructure/ServiceContainer.hpp"
+#include <functional>
 #include <memory>
 
 using namespace drogon;
@@ -18,6 +19,7 @@ public:
     ADD_METHOD_TO(System::getAccountToken, "/api/v1/system/token",   Post);
     ADD_METHOD_TO(System::login,           "/api/v1/system/login",   Post);
     ADD_METHOD_TO(System::getVersion,      "/api/v1/system/version", Get);
+    ADD_METHOD_TO(System::heartbeat,       "/api/v1/system/hearbeat", Get);
     METHOD_LIST_END
 
     // ✅ 无参构造，什么都不做，不碰 ServiceContainer
@@ -34,6 +36,11 @@ public:
     void getVersion(
         const HttpRequestPtr& req,
         std::function<void(const HttpResponsePtr&)>&& callback) const;
+
+    // GET /api/v1/system/heartbeat
+    // 终端每 30min 调用, 刷新token存活时间
+    void heartbeat(const HttpRequestPtr& req,
+            std::function<void(const HttpResponsePtr&)> && callback);
 
 private:
     /**

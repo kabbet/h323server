@@ -97,3 +97,32 @@ void System::getVersion(
     body["version"]   = kApiVersion;
     callback(makeSuccess(body));
 }
+
+// GET /api/v1/system/heartbeat
+// 终端每 30min 调用，刷新 account_token + SSO Cookie 的 TTL
+void System::heartbeat(
+    const HttpRequestPtr& req,
+    std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    const std::string accountToken = req->getParameter("account_token");
+    const std::string ssoCookie    = req->getCookie("SSO_COOKIE_KEY");
+
+    if (accountToken.empty()) {
+        callback(makeError(1000, "Missing account_token"));
+        return;
+    }
+    if (ssoCookie.empty()) {
+        callback(makeError(1000, "Missing SSO_COOKIE_KEY"));
+        return;
+    }
+
+    getService()->keepAlive(
+        accountToken, ssoCookie,
+        [callback]() {
+            callback(makeSuccess());
+        },
+        [callback](const std::string& msg, int code) {
+            callback(makeError(code, msg));
+        });
+}
+
